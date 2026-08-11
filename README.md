@@ -2,11 +2,14 @@
 
 **Step through a real AI agent's tool-use trace and watch a deterministic rubric flag the exact turn it hallucinated, mis-called a tool, or ignored the instruction, then see where an LLM-judge would have been fooled.**
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_App-FF4B4B?logo=streamlit&logoColor=white)](https://trajlens-mjh2vgfctsfyhrkulmtrxc.streamlit.app/)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-app-red?logo=streamlit&logoColor=white)
 ![Verifiers](https://img.shields.io/badge/verifiers-deterministic-brightgreen)
 ![No API key](https://img.shields.io/badge/API_key-not_required-success)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+**Live demo:** https://trajlens-mjh2vgfctsfyhrkulmtrxc.streamlit.app/
 
 <!--
 Add a screenshot/GIF here. Record the "LLM-judge verdict flips vs the rubric" moment on
