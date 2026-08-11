@@ -11,11 +11,9 @@
 
 **Live demo:** https://trajlens-mjh2vgfctsfyhrkulmtrxc.streamlit.app/
 
-<!--
-Add a screenshot/GIF here. Record the "LLM-judge verdict flips vs the rubric" moment on
-the Flight-booking trajectory, save it as docs/demo.gif, and uncomment:
--->
-<!-- ![TrajLens demo](docs/demo.gif) -->
+![TrajLens demo](docs/demo.gif)
+
+*Switching to the Flight-booking trajectory: the answer looks fine, but the rubric flags a hallucinated price the LLM-judge waved through.*
 
 > **What this is:** a public, clickable reconstruction of the agentic-evaluation work I do
 > under NDA for frontier-model providers (Scale AI / Outlier): auditing tool-use
