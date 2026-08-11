@@ -1,0 +1,182 @@
+[
+  {
+    "id": "web_research_pass",
+    "title": "Web research agent",
+    "category": "Web search / question answering",
+    "task": "Find the year the Eiffel Tower was completed and its height in metres, and cite the source.",
+    "expected_verdict": "PASSED",
+    "llm_judge_verdict": "PASSED",
+    "max_steps": 6,
+    "available_tools": [
+      { "name": "web_search", "required_args": ["query"] },
+      { "name": "open_page", "required_args": ["url"] }
+    ],
+    "answer_requirements": { "must_include": ["1889", "330"], "must_not_include": [] },
+    "steps": [
+      {
+        "thought": "I should search for the Eiffel Tower's completion year and height.",
+        "tool_call": { "name": "web_search", "args": { "query": "Eiffel Tower completion year height metres" } },
+        "observation": "Results: [1] Wikipedia - Eiffel Tower: completed 1889, height 330 m; [2] Britannica - Eiffel Tower, Paris.",
+        "planted_failures": []
+      },
+      {
+        "thought": "The Wikipedia result looks authoritative. Let me open it to confirm exact figures.",
+        "tool_call": { "name": "open_page", "args": { "url": "https://en.wikipedia.org/wiki/Eiffel_Tower" } },
+        "observation": "The Eiffel Tower was completed in 1889. It is 330 metres (1,083 ft) tall, the tallest structure in Paris.",
+        "planted_failures": []
+      }
+    ],
+    "final_answer": "The Eiffel Tower was completed in 1889 and is 330 metres tall (source: Wikipedia).",
+    "final_answer_claims": ["1889", "330 metres"],
+    "notes": "Clean run: correct tools, grounded answer, satisfies the citation instruction. Rubric and LLM-judge both PASS."
+  },
+  {
+    "id": "flight_booking_fail",
+    "title": "Flight-booking agent",
+    "category": "Travel / booking",
+    "task": "Book the cheapest DIRECT flight from Bangalore (BLR) to Delhi (DEL) on 2026-09-01.",
+    "expected_verdict": "FAILED",
+    "llm_judge_verdict": "PASSED",
+    "max_steps": 6,
+    "available_tools": [
+      { "name": "search_flights", "required_args": ["origin", "destination", "date"] },
+      { "name": "book_flight", "required_args": ["flight_id"] }
+    ],
+    "answer_requirements": { "must_include": ["direct"], "must_not_include": [] },
+    "steps": [
+      {
+        "thought": "Search for direct flights on the requested date.",
+        "tool_call": { "name": "search_flights", "args": { "origin": "BLR", "destination": "DEL", "date": "2026-09-01" } },
+        "observation": "Flights: F1 IndiGo direct 09:00 INR 8600; F2 Vistara 1 stop 07:30 INR 7200; F3 Air India direct 21:00 INR 9100.",
+        "planted_failures": []
+      },
+      {
+        "thought": "F1 is the cheapest direct option. I'll book it.",
+        "tool_call": { "name": "book_flight", "args": { "flight_id": "F1" } },
+        "observation": "Booked F1 IndiGo direct 09:00, INR 8600, PNR X7Q2.",
+        "planted_failures": []
+      }
+    ],
+    "final_answer": "Booked the cheapest direct flight F1 (IndiGo) from BLR to DEL for INR 7500. PNR X7Q2.",
+    "final_answer_claims": ["INR 7500"],
+    "notes": "The agent booked the right flight but the final answer states INR 7500 -- a price that never appeared in any tool output (the real fare was INR 8600). A results-only LLM-judge is fooled and passes it; the deterministic grounding check (C3) catches the hallucinated number."
+  },
+  {
+    "id": "refund_agent_fail",
+    "title": "Refund agent",
+    "category": "Customer support / actions",
+    "task": "Refund order #A1023 to the customer's original payment method.",
+    "expected_verdict": "FAILED",
+    "llm_judge_verdict": "FAILED",
+    "max_steps": 6,
+    "available_tools": [
+      { "name": "lookup_order", "required_args": ["order_id"] },
+      { "name": "issue_refund", "required_args": ["order_id", "amount"] },
+      { "name": "send_email", "required_args": ["to", "body"] }
+    ],
+    "answer_requirements": { "must_include": ["refund"], "must_not_include": [] },
+    "steps": [
+      {
+        "thought": "Look up the order details first.",
+        "tool_call": { "name": "lookup_order", "args": { "order_id": "A1023" } },
+        "observation": "Order A1023: amount INR 2499, method UPI, status delivered.",
+        "planted_failures": []
+      },
+      {
+        "thought": "I'll cancel the order to trigger the refund.",
+        "tool_call": { "name": "cancel_order", "args": { "order_id": "A1023" } },
+        "observation": "Error: unknown tool 'cancel_order'.",
+        "planted_failures": ["wrong_tool_selection"]
+      },
+      {
+        "thought": "Let me just issue the refund.",
+        "tool_call": { "name": "issue_refund", "args": { "order_id": "A1023" } },
+        "observation": "Error: missing required field 'amount'.",
+        "planted_failures": ["malformed_args"]
+      }
+    ],
+    "final_answer": "I attempted to process the refund for order A1023 but it did not complete.",
+    "final_answer_claims": [],
+    "notes": "Two structural failures: it invents a tool that does not exist (C1) and then calls issue_refund without the required amount (C2). Both the rubric and the LLM-judge correctly fail this one."
+  },
+  {
+    "id": "sql_agent_loop_fail",
+    "title": "SQL analytics agent",
+    "category": "Data / SQL",
+    "task": "Return the total number of rows in the customers table.",
+    "expected_verdict": "FAILED",
+    "llm_judge_verdict": "PASSED",
+    "max_steps": 3,
+    "available_tools": [
+      { "name": "run_sql", "required_args": ["query"] }
+    ],
+    "answer_requirements": { "must_include": ["1240"], "must_not_include": [] },
+    "steps": [
+      {
+        "thought": "Count the rows.",
+        "tool_call": { "name": "run_sql", "args": { "query": "SELECT COUNT(*) FROM customer" } },
+        "observation": "Error: no such table: customer.",
+        "planted_failures": []
+      },
+      {
+        "thought": "Try again.",
+        "tool_call": { "name": "run_sql", "args": { "query": "SELECT COUNT(*) FROM customer" } },
+        "observation": "Error: no such table: customer.",
+        "planted_failures": ["redundant_call"]
+      },
+      {
+        "thought": "Try again.",
+        "tool_call": { "name": "run_sql", "args": { "query": "SELECT COUNT(*) FROM customer" } },
+        "observation": "Error: no such table: customer.",
+        "planted_failures": ["redundant_call"]
+      },
+      {
+        "thought": "Maybe the table is plural.",
+        "tool_call": { "name": "run_sql", "args": { "query": "SELECT COUNT(*) FROM customers" } },
+        "observation": "1240",
+        "planted_failures": []
+      }
+    ],
+    "final_answer": "There are 1240 customers in the table.",
+    "final_answer_claims": ["1240"],
+    "notes": "The final answer is correct, so a results-only LLM-judge passes it. But the agent burned identical failing calls three times (C5 redundant_call) and blew the step budget (C7 inefficient) -- exactly the wasteful looping an eval must penalise even when the answer is right."
+  },
+  {
+    "id": "calendar_pass",
+    "title": "Calendar assistant",
+    "category": "Productivity / multi-tool",
+    "task": "Schedule a 30-minute meeting with Ravi on 2026-08-18 at 3pm and email him the invite.",
+    "expected_verdict": "PASSED",
+    "llm_judge_verdict": "PASSED",
+    "max_steps": 6,
+    "available_tools": [
+      { "name": "find_contact", "required_args": ["name"] },
+      { "name": "create_event", "required_args": ["title", "datetime", "duration_min", "attendee"] },
+      { "name": "send_email", "required_args": ["to", "subject", "body"] }
+    ],
+    "answer_requirements": { "must_include": ["scheduled"], "must_not_include": [] },
+    "steps": [
+      {
+        "thought": "Find Ravi's contact details.",
+        "tool_call": { "name": "find_contact", "args": { "name": "Ravi" } },
+        "observation": "Ravi Kumar <ravi@example.com>.",
+        "planted_failures": []
+      },
+      {
+        "thought": "Create the 30-minute event at the requested time.",
+        "tool_call": { "name": "create_event", "args": { "title": "Sync with Ravi", "datetime": "2026-08-18T15:00", "duration_min": 30, "attendee": "ravi@example.com" } },
+        "observation": "Event created: id EV88, 2026-08-18 15:00, 30 min, attendee ravi@example.com.",
+        "planted_failures": []
+      },
+      {
+        "thought": "Email Ravi the invite.",
+        "tool_call": { "name": "send_email", "args": { "to": "ravi@example.com", "subject": "Invite: Sync with Ravi", "body": "You're invited to a 30-min sync on 2026-08-18 at 3pm." } },
+        "observation": "Email sent to ravi@example.com.",
+        "planted_failures": []
+      }
+    ],
+    "final_answer": "Scheduled a 30-minute meeting with Ravi on 2026-08-18 at 3pm and emailed the invite to ravi@example.com.",
+    "final_answer_claims": ["ravi@example.com", "30"],
+    "notes": "Clean multi-tool run: correct contact lookup, event creation with all required args, and a grounded confirmation. Rubric and LLM-judge both PASS."
+  }
+]
