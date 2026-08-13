@@ -41,9 +41,17 @@ def main():
         print(f"{t['title']:<24}{human:<10}{verdict:<10}{judge:<12}{', '.join(modes) or '-'}")
 
     n = len(trajectories)
+    humans = [t.get("expected_verdict", "") for t in trajectories]
+    judges = [t.get("llm_judge_verdict", "") for t in trajectories]
+    po = sum(1 for x, y in zip(humans, judges) if x == y) / n
+    pa = sum(1 for x in humans if x == "PASSED") / n
+    pb = sum(1 for y in judges if y == "PASSED") / n
+    pe = pa * pb + (1 - pa) * (1 - pb)
+    kappa = 1.0 if pe >= 1.0 else (po - pe) / (1 - pe)
     print("-" * len(header))
     print(f"Rubric vs human agreement:    {rubric_agree}/{n}")
     print(f"LLM-judge vs human agreement: {judge_agree}/{n}")
+    print(f"LLM-judge Cohen's kappa:      {kappa:.2f}")
 
     (DATA.parent / "verdicts.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
     print("\nWrote data/verdicts.json")
