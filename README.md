@@ -13,7 +13,7 @@
 
 ![TrajLens demo](docs/demo.gif)
 
-*Switching to the Flight-booking trajectory: the answer looks fine, but the rubric flags a hallucinated price the LLM-judge waved through.*
+*The v2 tour: an agent that deletes a file it was only asked to list, another that buries failing tests under a confident answer, the corpus dashboard quantifying the LLM-judge's unreliability (Cohen's kappa 0.21), and the Grade-your-own tab.*
 
 > **What this is:** a public, clickable reconstruction of the agentic-evaluation work I do
 > under NDA for frontier-model providers (Scale AI / Outlier): auditing tool-use
