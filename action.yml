@@ -1,0 +1,35 @@
+name: TrajLens agent-trajectory gate
+description: Grade AI-agent tool-use logs with 9 deterministic verifiers and fail the job on a broken run.
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  paths:
+    description: Trace files or globs (OpenAI, Anthropic or TrajLens JSON / JSONL).
+    required: true
+  fail-on:
+    description: Comma-separated criteria that block the job, e.g. C3,C8,C9. Default all.
+    default: all
+  authorize:
+    description: Comma-separated side-effect tools the task is allowed to call (C9).
+    default: ""
+  python-version:
+    default: "3.11"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install TrajLens
+      shell: bash
+      run: pip install "${{ github.action_path }}"
+    - name: Grade trajectories
+      shell: bash
+      run: |
+        args=(grade ${{ inputs.paths }} --fail-on "${{ inputs.fail-on }}" \
+              --markdown "$GITHUB_STEP_SUMMARY" --junit trajlens-junit.xml)
+        if [ -n "${{ inputs.authorize }}" ]; then args+=(--authorize "${{ inputs.authorize }}"); fi
+        trajlens "${args[@]}"

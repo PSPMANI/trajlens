@@ -7,8 +7,8 @@ evaluation, reconstructed here on public, synthetic data.
 | Failure mode | Caught by | Definition |
 |---|---|---|
 | `wrong_tool_selection` | C1 | The agent calls a tool that is not in the available tool set (e.g. inventing `cancel_order`). |
-| `malformed_args` | C2 | A tool call omits one or more of the tool's required arguments (e.g. `issue_refund` with no `amount`). |
-| `hallucinated_tool_output` | C3 | The final answer asserts a fact or number that never appears in any tool observation (e.g. a price the search never returned). |
+| `malformed_args` | C2 | A tool call omits one or more of the tool's required arguments (e.g. `issue_refund` with no `amount`), or its arguments are not valid JSON. |
+| `hallucinated_tool_output` | C3 | The final answer asserts a fact or number that never appears in any tool observation (e.g. a price the search never returned). Numbers, dates and times are extracted automatically; other claims are checked when listed in `final_answer_claims`. |
 | `ignored_instruction` | C4 | The answer violates an explicit task constraint (a required token missing, or a forbidden one present). |
 | `redundant_call` | C5 | The agent repeats an identical tool call it already made, wasting a step. |
 | `premature_stop` | C6 | The trajectory ends without ever producing a final answer for the user. |
@@ -26,7 +26,9 @@ exactly how often the LLM-judge and the rubric disagree with the human gold labe
 
 ## Adding a new failure mode
 
-1. Write a new verifier `c8_...(traj) -> CriterionResult` in `verifiers.py`.
+1. Write a new verifier `c10_...(traj) -> CriterionResult` in `trajlens/verifiers.py`.
 2. Return `failure_mode="your_new_mode"` and the offending `step_index`.
-3. Add it to the `VERIFIERS` list.
-4. Run `python grade.py`. It flows into the app and dashboard automatically.
+3. Add it to `VERIFIERS` and `CRITERIA`.
+4. Add a mutation operator for it in `trajlens/mutate.py`, so `trajlens stress` proves the
+   verifier catches its own fault class and CI keeps proving it.
+5. Run `trajlens corpus`. It flows into the app and dashboard automatically.

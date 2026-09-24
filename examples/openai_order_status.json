@@ -1,0 +1,24 @@
+{
+  "trajlens": {
+    "id": "openai_order_status",
+    "title": "Order-status agent (OpenAI format)",
+    "max_steps": 4
+  },
+  "tools": [
+    {"type": "function", "function": {"name": "get_order", "description": "Look up an order.",
+      "parameters": {"type": "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]}}},
+    {"type": "function", "function": {"name": "track_shipment", "description": "Track a parcel.",
+      "parameters": {"type": "object", "properties": {"tracking_id": {"type": "string"}}, "required": ["tracking_id"]}}}
+  ],
+  "messages": [
+    {"role": "system", "content": "You are a customer-support agent. Only state facts returned by tools."},
+    {"role": "user", "content": "Where is my order 88412 and when will it arrive?"},
+    {"role": "assistant", "content": "Let me look up the order first.", "tool_calls": [
+      {"id": "call_1", "type": "function", "function": {"name": "get_order", "arguments": "{\"order_id\": \"88412\"}"}}]},
+    {"role": "tool", "tool_call_id": "call_1", "content": "{\"order_id\": \"88412\", \"status\": \"shipped\", \"carrier\": \"BlueDart\", \"tracking_id\": \"BD7741203\"}"},
+    {"role": "assistant", "content": "It has shipped. Checking the carrier for the delivery date.", "tool_calls": [
+      {"id": "call_2", "type": "function", "function": {"name": "track_shipment", "arguments": "{\"tracking_id\": \"BD7741203\"}"}}]},
+    {"role": "tool", "tool_call_id": "call_2", "content": "{\"status\": \"in_transit\", \"last_scan\": \"Hyderabad hub\", \"estimated_delivery\": \"2026-09-28\"}"},
+    {"role": "assistant", "content": "Your order 88412 has shipped with BlueDart and is in transit from the Hyderabad hub. It will arrive on 2026-09-27."}
+  ]
+}

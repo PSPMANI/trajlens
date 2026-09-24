@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trajlens"
+version = "3.0.0"
+description = "Deterministic auditing of AI-agent tool-use trajectories: 9 verifiers, mutation-tested, CI-ready."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Pathi Manikanta" }]
+requires-python = ">=3.10"
+dependencies = []  # the grading core is pure standard library
+keywords = ["llm", "agents", "evaluation", "llm-as-a-judge", "tool-use", "ai-safety"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Testing",
+]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.38", "pandas>=2.0", "altair>=5.0"]
+judge = ["anthropic>=0.40"]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.5"]
+
+[project.scripts]
+trajlens = "trajlens.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/PSPMANI/trajlens"
+Demo = "https://trajlens-mjh2vgfctsfyhrkulmtrxc.streamlit.app/"
+
+[tool.setuptools]
+packages = ["trajlens"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests", "."]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]

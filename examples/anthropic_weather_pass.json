@@ -1,0 +1,16 @@
+{
+  "trajlens": {"id": "anthropic_weather_pass", "title": "Weather agent (Anthropic format)", "max_steps": 3,
+               "answer_requirements": {"must_include": ["Chennai"]}},
+  "tools": [
+    {"name": "get_forecast", "input_schema": {"type": "object", "properties": {"city": {"type": "string"}, "date": {"type": "string"}}, "required": ["city", "date"]}}
+  ],
+  "messages": [
+    {"role": "user", "content": "Will it rain in Chennai on 2026-10-02? Give me the chance of rain and the high temperature."},
+    {"role": "assistant", "content": [
+      {"type": "tool_use", "id": "tu_1", "name": "get_forecast", "input": {"city": "Chennai", "date": "2026-10-02"}}]},
+    {"role": "user", "content": [
+      {"type": "tool_result", "tool_use_id": "tu_1", "content": "Chennai 2026-10-02: chance of rain 70%, high 31 C, low 25 C, winds 14 km/h."}]},
+    {"role": "assistant", "content": [
+      {"type": "text", "text": "Yes, rain is likely in Chennai on 2026-10-02: a 70% chance, with a high of 31 C."}]}
+  ]
+}

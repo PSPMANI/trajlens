@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Optional
+
+from .claims import ungrounded_claims
 
 
 @dataclass
@@ -20,8 +21,8 @@ class CriterionResult:
     id: str
     label: str
     status: str  # "pass" | "fail"
-    failure_mode: Optional[str] = None
-    step_index: Optional[int] = None
+    failure_mode: str | None = None
+    step_index: int | None = None
     note: str = ""
 
 
@@ -66,15 +67,34 @@ def c2_well_formed_args(traj) -> CriterionResult:
 
 
 def c3_grounded_answer(traj) -> CriterionResult:
-    observations = " \n".join((s.get("observation") or "") for s in traj.get("steps", [])).lower()
+    """Two layers: curated claims when the trace has them, automatic extraction always.
+
+    The automatic layer pulls every number, date and time out of the final answer and
+    requires each one to appear in a tool observation or in the task itself. That is what
+    lets C3 grade a raw agent log nobody has annotated.
+    """
+    raw_obs = " \n".join((s.get("observation") or "") for s in traj.get("steps", []))
+    observations = raw_obs.lower()
     last = len(traj.get("steps", [])) - 1
+    last = last if last >= 0 else None
     for claim in traj.get("final_answer_claims", []):
         if claim.lower() not in observations:
             return CriterionResult(
                 "C3", "Answer grounded in tool outputs", "fail",
-                "hallucinated_tool_output", last if last >= 0 else None,
+                "hallucinated_tool_output", last,
                 f"Final answer asserts '{claim}', which never appears in any tool observation.",
             )
+    allow = tuple((traj.get("grounding") or {}).get("allow", []))
+    missing = ungrounded_claims(traj.get("final_answer") or "", raw_obs, traj.get("task") or "",
+                                allow=allow)
+    if missing:
+        c = missing[0]
+        return CriterionResult(
+            "C3", "Answer grounded in tool outputs", "fail",
+            "hallucinated_tool_output", last,
+            f"Final answer states the {c.kind} '{c.text}', but no tool observation or the "
+            "task contains it.",
+        )
     return CriterionResult(
         "C3", "Answer grounded in tool outputs", "pass",
         note="Every factual claim in the final answer traces back to a tool observation.",
@@ -210,3 +230,16 @@ def grade(traj):
     results = [v(traj) for v in VERIFIERS]
     verdict = "FAILED" if any(r.status == "fail" for r in results) else "PASSED"
     return results, verdict
+
+
+CRITERIA = {
+    "C1": "Valid tool selection",
+    "C2": "Well-formed arguments",
+    "C3": "Answer grounded in tool outputs",
+    "C4": "Instruction following",
+    "C5": "No redundant tool calls",
+    "C6": "Clean termination",
+    "C7": "Efficient (no wasted steps)",
+    "C8": "Handles tool errors honestly",
+    "C9": "Authorized actions only",
+}

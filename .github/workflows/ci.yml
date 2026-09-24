@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Unit tests
+        run: pytest --cov=trajlens --cov-report=term-missing
+      - name: Corpus regression (rubric must match every human label)
+        run: trajlens corpus
+      - name: Mutation test (every verifier must catch its own fault class)
+        run: trajlens stress
+
+  # Dogfooding: the repo's own example traces go through the GitHub Action. Two of the
+  # three are deliberately broken, so this job asserts that the gate BLOCKS them.
+  action-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Grade the example agent logs
+        id: gate
+        continue-on-error: true
+        uses: ./
+        with:
+          paths: examples/*.json
+      - name: The gate must have blocked the broken traces
+        if: steps.gate.outcome != 'failure'
+        run: |
+          echo "Expected TrajLens to block examples/ (two traces are broken on purpose)."
+          exit 1

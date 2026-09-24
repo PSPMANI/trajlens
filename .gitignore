@@ -7,3 +7,9 @@ env/
 .DS_Store
 .idea/
 .vscode/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
